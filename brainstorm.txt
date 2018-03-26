@@ -1,0 +1,84 @@
+input components -> send message to device
+output components -> display data
+
+
+
+define view
+
+	example weather station
+
+		components
+
+		temperature display (output)
+		humidity display (output)
+		reset data (input)
+
+list of connected devices - if device no user-agent header is sent
+list of browsers          - if browser user-agent header is sent
+
+
+device message  - find all views currently in browsers and see if view has device_id from device message, if so send message to browser
+browser message - view has link to device, message contains device id
+
+socket auth
+first connect using basic http to get token
+send token in ws communication
+
+notes
+
+	if component does not exist for view cannot display anything
+
+	default page with list of device and other info -> this can also be like a component
+	default page with components for device         -> this can also be like a component
+
+	how to define components on device page?
+	in html of device page (like a class in div or attribute)
+	or in python class for component
+
+	select device and proceed to
+
+
+	difference between device and browser?
+	maybe some identifier to determine if device or browser?
+
+	message from device
+		-> send message to all browsers
+		-> message from browser -> send message to specific device
+
+	device client -> simple interface for sending receiving messages
+	              -> maybe could offer client for different languages
+
+	maybe json message with identifiers (view id, component id etc.) and message data
+
+components
+
+python object
+base class has method for generating output html and some way to pass user data to view
+
+js/css/html
+jinja2 for template engine
+
+js some method that can be overrided
+   -> method for receiving input message
+   -> method for generating output message
+
+html can be whatever
+
+when rendering components page include js and css of component
+could be a static files method on http server that generates js and css for different components
+
+js uses objects for component, so in generated components js there is definition for object class
+
+device disconnected -> notify browsers
+
+devices gets id after authentication - for now just generate custom id
+
+client protocol
+    -> on_message - when read until \n
+    -> on_connected
+    -> on_disconnected
+    -> write method
+
+tcp client
+ queue for output messages
+ on message read call protocol on_message
