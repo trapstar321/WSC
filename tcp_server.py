@@ -3,40 +3,13 @@ from tornado.options import define, options
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer as TornadoTCPServer
+from protocols.server.tcp.echo_protocol import EchoProtocol
+from dev_brows_connector import DeviceBrowserConnector
 
-import asyncio
+import asyncio, logging
 
-class Protocol(object):
-    def __init__(self):
-        self.clients = []
-
-    def on_client_connected(self, address):
-        self.clients.append(address)
-
-    def on_client_disconnected(self, address):
-        self.clients.remove(address)
-
-    def on_message(self, address, message):
-        pass
-
-    def send(self, address, message):
-        pass
-
-class EchoProtocol(Protocol):
-    def on_client_connected(self, address):
-        super(EchoProtocol,self).on_client_connected(address)
-        print('Client {} connected'.format(address))
-
-    def on_client_disconnected(self, address):
-        super(EchoProtocol, self).on_client_disconnected(address)
-        print('Client {} disconnected'.format(address))
-
-    def on_message(self, address, message):
-        print('Got message {} from client {}'.format(message, address))
-        self.send(address, message)
-
-    def send(self, address, message):
-        self.server.send(address, message)
+from utils.logging import ConsoleLogger
+logger = ConsoleLogger('tcp_server.py')
 
 class TCPServer(TornadoTCPServer):
     """Tornado asynchronous echo TCP server."""
@@ -51,6 +24,11 @@ class TCPServer(TornadoTCPServer):
         self.loop = asyncio.get_event_loop()
         self.listen(port)
 
+        logger.info('Listenining on port {}'.format(port))
+
+        self.d_b_connector = DeviceBrowserConnector(self.protocol)
+        self.websocketserver_id = self.d_b_connector.add_server('127.0.0.1', 8888)
+
         IOLoop.instance().start()
 
     #client connected
@@ -58,19 +36,20 @@ class TCPServer(TornadoTCPServer):
     def handle_stream(self, stream, address):
         ip, fileno = address
         TCPServer.clients[address]=stream
-        self.protocol.on_client_connected(address)
+        self.protocol.on_connected(address)
+        self.d_b_connector.add_device(self.websocketserver_id, address)
         while True:
             try:
                 data = yield stream.read_until('\n'.encode('utf-8'))
                 self.protocol.on_message(address, data)
             except StreamClosedError:
                 del TCPServer.clients[address]
-                self.protocol.on_client_disconnected(address)
+                self.protocol.on_disconnected(address)
                 break
 
     def send(self, address, message):
         stream = TCPServer.clients[address]
-        if(stream.closed()):
+        if stream.closed():
             raise Exception('Client not connected')
         self.loop.call_soon_threadsafe(asyncio.async, self.write(stream, message))
 
@@ -79,6 +58,11 @@ class TCPServer(TornadoTCPServer):
 
 
 if __name__ == "__main__":
+    #had some problems with double logging, here they are all disabled
+    for key in logging.Logger.manager.loggerDict.keys():
+        lg = logging.getLogger(key)
+        lg.propagate=False
+
     protocol = EchoProtocol()
     server = TCPServer(8080, protocol)
 

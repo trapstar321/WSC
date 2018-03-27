@@ -6,10 +6,7 @@ import tornado.websocket
 import os.path
 
 from tornado.options import define, options
-
-from models.browser import Browser
-from models.device import Device
-
+from protocols.server.websocket.echo_protocol import EchoProtocol
 from utils.logging import ConsoleLogger
 logger = ConsoleLogger('wsock_server.py')
 
@@ -31,8 +28,8 @@ class Application(tornado.web.Application):
 
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
-    browsers={}
-    devices={}
+    clients={}
+    protocol=None
 
     def check_origin(self, origin):
         return True
@@ -42,29 +39,25 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         return {}
 
     def open(self):
-        address = self.stream.socket.getpeername()
-        if 'User-Agent' in self.request.headers:
-            logger.info('Add browser. Address={}'.format(str(address)))
-            WebSocketServer.browsers[self]=Browser(self, self.request.headers['User-Agent'], address)
-        else:
-            logger.info('Add device. Address={}'.format(str(address)))
-            WebSocketServer.devices[self] = Device(self, str(uuid.uuid1()), address)
+        self.address = self.stream.socket.getpeername()
+        WebSocketServer.clients[self.address]=self
+        WebSocketServer.protocol.on_connected(self.address)
 
     def on_close(self):
-        # TODO: if device disconnects notify browsers
-        if self in WebSocketServer.devices:
-            logger.info('Remove device. Address={}'.format(str(WebSocketServer.devices[self].address)))
-            del WebSocketServer.devices[self]
-        else:
-            logger.info('Remove browser. Address={}'.format(str(WebSocketServer.browsers[self].address)))
-            del WebSocketServer.browsers[self]
+        del WebSocketServer.clients[self.address]
+        WebSocketServer.protocol.on_disconnected(self.address)
 
     def on_message(self, message):
-        logger.info('Received => {}'.format(message))
-        self.write_message(message)
+        WebSocketServer.protocol.on_message(self.stream.socket.getpeername(), message)
+
+    @classmethod
+    def send(self, address, message):
+        WebSocketServer.clients[address].write_message(message)
 
 def main():
     tornado.options.parse_command_line()
+    WebSocketServer.protocol = EchoProtocol()
+    WebSocketServer.protocol.server = WebSocketServer
     app = Application()
     app.listen(options.port)
 

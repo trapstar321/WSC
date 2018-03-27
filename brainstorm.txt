@@ -82,3 +82,31 @@ client protocol
 tcp client
  queue for output messages
  on message read call protocol on_message
+
+websocketbridge or inputoutputhandler in TCPServer
+ - can have connection to multiple websocket servers
+ - method to add server, make websocket connection and connect, return id for server
+ - method to add clients protocol to web server, link websocketclient with protocol
+ - each websocketclient has their protocol for labeling message with client protocol id
+
+ - method to remove server, disconnect and remove id from dict
+ - forward/send method to forward/send message to server
+ - describe server with tuple containg ip, port
+
+
+
+ - receiving messages
+ problem: how to know for which client the message is for?
+ label message with protocol id so when it returns, we know to which device to send message
+ python objects already have id, so protocol id is objects id
+ how does protocol detect that message is from device or browser?
+ maybe add on_browser_message method on protocol?
+
+class to hold data
+
+Connection
+    ip
+    port
+    ws_client -> must make new protocol with
+                 method to label message with protocol id
+                 method to extract protocol id from message
