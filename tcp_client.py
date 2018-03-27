@@ -43,17 +43,25 @@ class TCPClient(object):
         self.protocol=protocol
         self.protocol.client = self
 
-        self.loop = asyncio.new_event_loop()
-        self.loop.run_until_complete(self.connect())
+        try:
+            self.loop = asyncio.new_event_loop()
+            self.loop.run_until_complete(self.connect())
 
-        t = threading.Thread(target=self.start, args=(self.loop,))
-        t.start()
+            t = threading.Thread(target=self.start, args=(self.loop,))
+            t.start()
+        except StreamClosedError as e:
+            self.protocol.on_disconnected()
 
     def start(self, loop):
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.read())
 
+    def connected(self):
+        return self.loop.is_running()
+
     def send(self, message):
+        if not self.loop.is_running():
+            raise Exception('Client not connected')
         self.loop.call_soon_threadsafe(asyncio.async, self.write(message))
 
     async def write(self, message):
@@ -78,5 +86,7 @@ if __name__=="__main__":
 
     import time
     #time.sleep(0.5)
+    print(client.connected())
+
     protocol.send('Hi\n')
     time.sleep(20)

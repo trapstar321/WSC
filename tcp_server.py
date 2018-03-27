@@ -8,13 +8,13 @@ import asyncio
 
 class Protocol(object):
     def __init__(self):
-        self.clients = {}
+        self.clients = []
 
-    def on_client_connected(self, address, stream):
-        self.clients[address]=stream
+    def on_client_connected(self, address):
+        self.clients.append(address)
 
     def on_client_disconnected(self, address):
-        del self.clients[address]
+        self.clients.remove(address)
 
     def on_message(self, address, message):
         pass
@@ -23,8 +23,8 @@ class Protocol(object):
         pass
 
 class EchoProtocol(Protocol):
-    def on_client_connected(self, address, stream):
-        super(EchoProtocol,self).on_client_connected(address, stream)
+    def on_client_connected(self, address):
+        super(EchoProtocol,self).on_client_connected(address)
         print('Client {} connected'.format(address))
 
     def on_client_disconnected(self, address):
@@ -33,13 +33,14 @@ class EchoProtocol(Protocol):
 
     def on_message(self, address, message):
         print('Got message {} from client {}'.format(message, address))
-        self.send(self.clients[address], message)
+        self.send(address, message)
 
-    def send(self, stream, message):
-        self.server.send(stream, message)
+    def send(self, address, message):
+        self.server.send(address, message)
 
 class TCPServer(TornadoTCPServer):
     """Tornado asynchronous echo TCP server."""
+    clients = {}
 
     def __init__(self, port, protocol):
         super(TCPServer, self).__init__()
@@ -56,16 +57,21 @@ class TCPServer(TornadoTCPServer):
     @gen.coroutine
     def handle_stream(self, stream, address):
         ip, fileno = address
-        self.protocol.on_client_connected(address, stream)
+        TCPServer.clients[address]=stream
+        self.protocol.on_client_connected(address)
         while True:
             try:
                 data = yield stream.read_until('\n'.encode('utf-8'))
                 self.protocol.on_message(address, data)
             except StreamClosedError:
+                del TCPServer.clients[address]
                 self.protocol.on_client_disconnected(address)
                 break
 
-    def send(self, stream, message):
+    def send(self, address, message):
+        stream = TCPServer.clients[address]
+        if(stream.closed()):
+            raise Exception('Client not connected')
         self.loop.call_soon_threadsafe(asyncio.async, self.write(stream, message))
 
     async def write(self, stream, message):
