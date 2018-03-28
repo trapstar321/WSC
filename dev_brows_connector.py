@@ -41,12 +41,22 @@ class DeviceBrowserConnector(object):
         logger.info('Add device {} to server {}'.format(device, server_id))
         self.devices[id(device)]={'server':server_id, 'address':device}
 
-    # TODO: add disconnect method on client
+    # TODOD disconnect wsock_client if connected
     def remove_server(self, server_id):
-        pass
+        del self.connections[server_id]
 
-    def remove_device(self, protocol):
-        del self.devices[id(protocol)]
+        to_del = []
+
+        for device_id in self.devices:
+            srv_id=self.devices[device_id]['server']
+            if server_id==srv_id:
+                to_del.append(device_id)
+
+        for key in to_del:
+            del self.devices[key]
+
+    def remove_device(self, device):
+        del self.devices[id(device)]
 
     #message from device, called from tcp server protocol
     def on_device_message(self, device, message):

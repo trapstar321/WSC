@@ -110,3 +110,6 @@ Connection
     ws_client -> must make new protocol with
                  method to label message with protocol id
                  method to extract protocol id from message
+
+when device disconnects remove it from connector
+queue with messages in client, with reconnect capability

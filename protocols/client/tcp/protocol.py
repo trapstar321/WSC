@@ -1,16 +1,12 @@
-from utils.logging import ConsoleLogger
-
-logger = ConsoleLogger('protocols/client/tcp/protocol.py')
-
 class Protocol(object):
     def on_connected(self):
-        logger.info('Connected')
+        pass
 
     def on_disconnected(self):
-        logger.info('Disconnected')
+        pass
 
     def on_message(self, message):
-        logger.info('Received => {}'.format(message))
+        pass
 
     def send(self, message):
-        logger.info('Send => {}'.format(message))
+        pass
