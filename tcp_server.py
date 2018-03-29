@@ -43,24 +43,29 @@ class TCPServer(TornadoTCPServer):
                 data = yield stream.read_until('\n'.encode('utf-8'))
                 self.protocol.on_message(address, data)
             except StreamClosedError:
-                del TCPServer.clients[address]
-                # TODO when client disconnects, remove device from connector
-                self.protocol.on_disconnected(address)
+                if address in TCPServer.clients:
+                    # TODO when client disconnects, remove device from connector
+                    del TCPServer.clients[address]
+                    self.protocol.on_disconnected(address)
                 break
 
     def send(self, address, message):
-        stream = TCPServer.clients[address]
-        if stream.closed():
+        try:
+            stream = TCPServer.clients[address]
+            if stream.closed():
+                raise Exception('Client not connected')
+            self.loop.call_soon_threadsafe(asyncio.async, self.write(address, stream, message))
+        except KeyError:
             raise Exception('Client not connected')
-        self.loop.call_soon_threadsafe(asyncio.async, self.write(address, stream, message))
 
     async def write(self, address, stream, message):
         try:
             await stream.write(message)
         except StreamClosedError:
-            #TODO when client disconnects, remove device from connector
-            del TCPServer.clients[address]
-            self.protocol.on_disconnected(address)
+            if address in TCPServer.clients:
+                #TODO when client disconnects, remove device from connector
+                del TCPServer.clients[address]
+                self.protocol.on_disconnected(address)
 
 if __name__ == "__main__":
     #had some problems with double logging, here they are all disabled

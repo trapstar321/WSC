@@ -1,8 +1,9 @@
 from tornado.iostream import StreamClosedError
 from tornado.tcpclient import TCPClient as TornadoTCPClient
 from utils.logging import ConsoleLogger
-import logging, time
+import logging
 from protocols.client.tcp.echo_protocol import  EchoProtocol
+from queue import Queue
 
 import asyncio, threading
 
@@ -39,6 +40,7 @@ class TCPClient(object):
     def send(self, message):
         if self.stream.closed():
             raise Exception('Client not connected')
+
         self.loop.call_soon_threadsafe(asyncio.async, self.write(message))
 
     async def write(self, message):

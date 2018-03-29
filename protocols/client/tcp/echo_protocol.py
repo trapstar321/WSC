@@ -1,27 +1,34 @@
-from protocols.client.tcp.protocol import Protocol
+from protocols.client.tcp.ack_protocol import AckProtocol
 from utils.logging import ConsoleLogger
 import time
 
 logger = ConsoleLogger('protocols/client/tcp/echo_protocol.py')
 
-class EchoProtocol(Protocol):
+class EchoProtocol(AckProtocol):
     def on_connected(self):
         super(EchoProtocol, self).on_connected()
         logger.info('Connected')
-        self.client.send('Hi\n'.encode('utf-8'))
+        #message = 'Hi\n'.encode('utf-8')
+        #message = super(EchoProtocol, self).send(message)
+        #self.client.send(message)
 
     def on_disconnected(self):
         super(EchoProtocol, self).on_disconnected()
         logger.info('Disconnected')
 
     def on_message(self, message):
-        super(EchoProtocol, self).on_message(message)
-        logger.info('Received => {}'.format(message))
+        #call AckProtocol on_message so it removes ack in message
+        message = super(EchoProtocol, self).on_message(message)
 
-        self.send(message)
-        time.sleep(3)
+        if message:
+            logger.info('Received => {}'.format(message))
+
+            #time.sleep(2)
+            self.send(message)
 
     def send(self, message):
-        super(EchoProtocol, self).send(message)
         logger.info('Send => {}'.format(message))
+        #call AckProtocol send so it adds ack in message
+        message = super(EchoProtocol, self).send(message)
+
         self.client.send(message)

@@ -113,3 +113,23 @@ Connection
 
 when device disconnects remove it from connector
 queue with messages in client, with reconnect capability
+
+
+client message queue also on server, but then client must authenticate so server can link
+messages with client in queue after reconnect
+
+identitfy client on connect, so when client reconnects it sends his ID again and queue on server can be processed again
+
+
+AckProtocol queue key is ID returned to client
+store address somewhere else
+
+IdentifyProtocol
+
+AckProtocol extends IdentityProtocol
+
+on_connected call IdentityProtocol
+    generate ID in IdentityProtocol and return to AckProtocol
+    AckProtocol send to client his new id
+
+if client returns some other ID after after new ID message, then fix ID in queue
