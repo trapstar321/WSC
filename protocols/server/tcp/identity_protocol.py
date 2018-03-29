@@ -4,6 +4,7 @@ import threading,sys
 
 logger = ConsoleLogger('protocols/server/tcp/identity_protocol.py')
 
+
 #just for generating client id's
 class IdentityProtocol(Protocol):
     def __init__(self):

@@ -13,3 +13,4 @@ class Protocol(object):
 
     def send(self, address, message):
         pass
+

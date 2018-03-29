@@ -1,8 +1,10 @@
 from protocols.server.tcp.identity_protocol import IdentityProtocol
 from utils.logging import ConsoleLogger
 import threading, sys
+import json
 
 logger = ConsoleLogger('protocols/server/tcp/ack_protocol.py')
+
 
 class AckProtocol(IdentityProtocol):
     def __init__(self):
@@ -22,49 +24,44 @@ class AckProtocol(IdentityProtocol):
     def on_connected(self, address):
         id_ = super(AckProtocol,self).on_connected(address)
         #add lock and message counter for client
-        self.queue[id_]={'lock':threading.Lock(), 'queue':{}, 'msg_counter':0}
+        self.queue[id_]={'lock': threading.Lock(), 'queue': {}, 'msg_counter': 0}
         self.address_id_map[address]=id_
-        msg='{client_id='+str(id_)+'}\n'
-        self.send(address, msg.encode('utf-8'))
-        logger.info('Client {} connected'.format(address))
+
+        msg = {'client_id': id_}
+        self.send(address, msg)
 
     def send(self, address, message):
         super(AckProtocol, self).send(address, message)
         client_id=self.address_id_map[address]
+
+
         # add message_id to message so it can be acknowledged, only if not ack message
-        if '{ack' not in message.decode('utf-8'):
+        if 'ack' not in message:
             id_ = self.gen_msg_id(client_id)
             self.queue[client_id]['queue'][id_] = message
-            sign = '{id=' + str(id_) + '}'
-            sign = sign.encode('utf-8')
-            message = sign + message
+
+            message['id'] = id_
             logger.info('Signed message {} for client {}'.format(message, address))
 
         return message
 
-
     def on_message(self, address, message):
         super(AckProtocol, self).on_message(address, message)
         client_id=self.address_id_map[address]
-        rep = message.decode('utf-8')
 
         #acknowledge message
-        if '{ack=' in rep:
-            s = 5
-            e = rep.index('}')
-            msg_id = rep[s:e]
-            del self.queue[client_id]['queue'][int(msg_id)]
+        if 'ack' in message:
+            msg_id=message['ack']
+            del self.queue[client_id]['queue'][msg_id]
 
             logger.info('Got ack for message {} from client {}'.format(message, address))
             return None
         else:
             # return ack and extract message
-            s = rep.index('{id=') + 4
-            e = rep.index('}')
-            msg_id = rep[s:e]
-            ack = '{ack=' + msg_id + '}\n'
+            msg_id = message['id']
+            ack = {'ack': msg_id}
 
             logger.info('Return ack {} for message'.format(message))
-            self.send(address, ack.encode('utf-8'))
+            self.send(address, ack)
 
-            return rep[e + 1:].encode('utf-8')
+        return message

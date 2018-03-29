@@ -4,6 +4,7 @@ import time
 
 logger = ConsoleLogger('protocols/client/websocket/echo_protocol.py')
 
+
 class EchoProtocol(Protocol):
     def on_connected(self):
         super(EchoProtocol, self).on_connected()

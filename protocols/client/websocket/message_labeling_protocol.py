@@ -1,7 +1,9 @@
 from protocols.client.websocket.protocol import Protocol
 from utils.logging import ConsoleLogger
+import json
 
 logger = ConsoleLogger('protocols/client/websocket/message_labeling_protocol.py')
+
 
 class MessageLabelingProtocol(Protocol):
     def on_connected(self):
@@ -24,14 +26,10 @@ class MessageLabelingProtocol(Protocol):
 
     # connector will call label message before calling send
     def label_message(self, device_id, message):
-        return "({})".format(device_id)+message
+        message['dev_id']=device_id
+        return message
 
     # connector will call extract label after receiving message
     def extract_label(self, message):
-        start = message.index('(')
-        end = message.index(')')
-        return message[start+1:end]
+        return message['dev_id']
 
-    def extract_message(self, message):
-        end = message.index(')')
-        return message[end+1:]
