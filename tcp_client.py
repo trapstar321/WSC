@@ -15,16 +15,22 @@ class TCPClient(object):
         self.port = port
         self.protocol=protocol
         self.protocol.client = self
+        self.loop = None
 
+    def connect(self):
         try:
             logger.info('Connecting...')
             self.loop = asyncio.new_event_loop()
-            self.loop.run_until_complete(self.connect())
+            self.loop.run_until_complete(self.connect_())
 
             t = threading.Thread(target=self.start, args=(self.loop,))
             t.start()
         except StreamClosedError as e:
             self.protocol.on_disconnected()
+
+    def disconnect(self):
+        self.stream.close()
+        self.protocol.on_disconnected()
 
     def start(self, loop):
         asyncio.set_event_loop(loop)
@@ -33,14 +39,13 @@ class TCPClient(object):
     def connected(self):
         return not self.stream.closed()
 
-    async def connect(self):
+    async def connect_(self):
         self.stream = await TornadoTCPClient().connect(self.address, self.port)
         self.protocol.on_connected()
 
     def send(self, message):
         if self.stream.closed():
-            raise Exception('Client not connected')
-
+            return False
         self.loop.call_soon_threadsafe(asyncio.async, self.write(message))
 
     async def write(self, message):
@@ -65,3 +70,10 @@ if __name__=="__main__":
 
     protocol = EchoProtocol()
     client = TCPClient('127.0.0.1', 8080, protocol)
+    client.connect()
+
+    #import time
+    #time.sleep(1)
+    #client.disconnect()
+    #time.sleep(1)
+    #client.connect()

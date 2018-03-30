@@ -111,7 +111,7 @@ Connection
                  method to label message with protocol id
                  method to extract protocol id from message
 
-when device disconnects remove it from connector
+when device disconnects address will be remaped if client reconnects
 queue with messages in client, with reconnect capability
 
 
@@ -120,16 +120,24 @@ messages with client in queue after reconnect
 
 identitfy client on connect, so when client reconnects it sends his ID again and queue on server can be processed again
 
-
 AckProtocol queue key is ID returned to client
-store address somewhere else
+address stored in address<>id map
 
-IdentifyProtocol
+IdentifyProtocol - on client so on connect device_id can be added
 
-AckProtocol extends IdentityProtocol
+AckProtocol extends IdentityProtocol - on client only
 
 on_connected call IdentityProtocol
-    generate ID in IdentityProtocol and return to AckProtocol
-    AckProtocol send to client his new id
+    generate ID in IdentityProtocol and return to AckProtocol so id can be passed to server
 
-if client returns some other ID after after new ID message, then fix ID in queue
+client always send his id on connect, so if he reconnects address can be remaped
+
+exception raised in send call makes TCP server not run anymore
+
+after client reconnect, all messages left in queue must be sent
+send method should not raise exception, maybe just return flag False, and do not add to queue
+
+add queue for websocket client on tcp server, this can also reconnect
+
+
+

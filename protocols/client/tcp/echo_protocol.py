@@ -7,8 +7,10 @@ logger = ConsoleLogger('protocols/client/tcp/echo_protocol.py')
 
 class EchoProtocol(AckProtocol):
     def on_connected(self):
-        super(EchoProtocol, self).on_connected()
+        message = super(EchoProtocol, self).on_connected()
         logger.info('Connected')
+        self.send(message)
+
         #message = 'Hi\n'.encode('utf-8')
         #message = super(EchoProtocol, self).send(message)
         #self.client.send(message)

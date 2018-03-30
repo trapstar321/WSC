@@ -21,8 +21,14 @@ class AckProtocol(IdentityProtocol):
             self.msg_id_counter+=1
         return self.msg_id_counter
 
+    def on_connected(self):
+        return super(AckProtocol, self).on_connected()
+
+    def on_disconnected(self):
+        pass
+
     def on_message(self, message):
-        message = super(AckProtocol, self).on_message(message)
+        super(AckProtocol, self).on_message(message)
 
         # acknowledge message
         if 'ack' in message:

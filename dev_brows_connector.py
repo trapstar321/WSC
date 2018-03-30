@@ -19,7 +19,9 @@ class Connection(object):
 
 class DeviceBrowserConnector(object):
     def __init__(self, tcp_server_protocol):
+        #connections are websocket servers
         self.connections={}
+        #device are clients
         self.devices={}
         self.tcp_server_protocol = tcp_server_protocol
         self.protocol = MessageLabelingProtocol()
@@ -39,9 +41,9 @@ class DeviceBrowserConnector(object):
         return id(c)
 
     #add device (address tuple) to server
-    def add_device(self, server_id, device):
+    def add_device(self, server_id, device, address):
         logger.info('Add device {} to server {}'.format(device, server_id))
-        self.devices[id(device)]={'server':server_id, 'address':device}
+        self.devices[device]={'server':server_id, 'address':address}
 
     # TODOD disconnect wsock_client if connected
     def remove_server(self, server_id):
@@ -58,13 +60,17 @@ class DeviceBrowserConnector(object):
             del self.devices[key]
 
     def remove_device(self, device):
-        del self.devices[id(device)]
+        logger.info('Remove device {}'.format(device))
+        del self.devices[device]
+
+    def address_changed(self, device, address):
+        self.devices[device]['address']=address
 
     #message from device, called from tcp server protocol
     def on_device_message(self, device, message):
         logger.info('Received message {} from device {}'.format(message, device))
-        connection = self.connections[self.devices[id(device)]['server']]
-        message = json.dumps(self.protocol.label_message(id(device), message)).encode('utf-8')+'\n'.encode('utf-8')
+        connection = self.connections[self.devices[device]['server']]
+        message = json.dumps(self.protocol.label_message(device, message)).encode('utf-8')+'\n'.encode('utf-8')
         connection.protocol.send(message)
 
     #message from browser, called from protocol of connection
@@ -72,6 +78,6 @@ class DeviceBrowserConnector(object):
         logger.info('Received message {} from browser'.format(message))
         message = json.loads(message)
         device_id = self.protocol.extract_label(message)
-        address = self.devices[int(device_id)]['address']
+        address = self.devices[device_id]['address']
         del message['dev_id']
         self.tcp_server_protocol.send(address, message)

@@ -37,14 +37,13 @@ class TCPServer(TornadoTCPServer):
         ip, fileno = address
         TCPServer.clients[address]=stream
         self.protocol.on_connected(address)
-        self.d_b_connector.add_device(self.websocketserver_id, address)
+
         while True:
             try:
                 data = yield stream.read_until('\n'.encode('utf-8'))
                 self.protocol.on_message(address, data)
             except StreamClosedError:
                 if address in TCPServer.clients:
-                    # TODO when client disconnects, remove device from connector
                     del TCPServer.clients[address]
                     self.protocol.on_disconnected(address)
                 break
@@ -53,7 +52,7 @@ class TCPServer(TornadoTCPServer):
         try:
             stream = TCPServer.clients[address]
             if stream.closed():
-                raise Exception('Client not connected')
+                return False
             self.loop.call_soon_threadsafe(asyncio.async, self.write(address, stream, message))
         except KeyError:
             raise Exception('Client not connected')
@@ -63,7 +62,6 @@ class TCPServer(TornadoTCPServer):
             await stream.write(message)
         except StreamClosedError:
             if address in TCPServer.clients:
-                #TODO when client disconnects, remove device from connector
                 del TCPServer.clients[address]
                 self.protocol.on_disconnected(address)
 

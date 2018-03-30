@@ -21,12 +21,31 @@ class EchoProtocol(AckProtocol):
 
         if message:
             logger.info('Received message {} from client {}'.format(message, address))
-            #self.send(address, message)
-            #forward message to websocketserver
-            self.server.d_b_connector.on_device_message(address, message)
+            dev_id = super(EchoProtocol, self).device_id(address)
+            if 'add_device' in message:
+                server = self.server
+                server.d_b_connector.add_device(server.websocketserver_id, dev_id, address)
+                self.send(address, message)
+            elif message['forward']==1:
+                self.server.d_b_connector.on_device_message(dev_id, message)
+            elif 'remap' in message:
+                self.server.d_b_connector.address_changed(dev_id, message['new_address'])
+                self.send(address, message)
+            else:
+                self.send(address, message)
+
 
     def send(self, address, message):
         message = super(EchoProtocol, self).send(address, message)
+        if 'add_device' in message:
+            del message['add_device']
+        if 'forward' in message:
+            del message['forward']
+        if 'remap' in message:
+            del message['remap']
+        if 'new_address' in message:
+            del message['new_address']
+
         logger.info('Send message {} to client {}'.format(message, address))
         message = json.dumps(message).encode('utf-8') + '\n'.encode('utf-8')
         self.server.send(address, message)
