@@ -54,8 +54,8 @@ class TCPServer(TornadoTCPServer):
             if stream.closed():
                 return False
             self.loop.call_soon_threadsafe(asyncio.async, self.write(address, stream, message))
-        except KeyError:
-            raise Exception('Client not connected')
+        except KeyError as e:
+            logger.info('KeyError TCPServer.clients: {}'.format(str(e)))
 
     async def write(self, address, stream, message):
         try:

@@ -3,7 +3,7 @@ from tornado.tcpclient import TCPClient as TornadoTCPClient
 from utils.logging import ConsoleLogger
 import logging
 from protocols.client.tcp.echo_protocol import  EchoProtocol
-from queue import Queue
+import time
 
 import asyncio, threading
 
@@ -23,18 +23,29 @@ class TCPClient(object):
             self.loop = asyncio.new_event_loop()
             self.loop.run_until_complete(self.connect_())
 
-            t = threading.Thread(target=self.start, args=(self.loop,))
-            t.start()
+            self.t = threading.Thread(target=self.start, args=(self.loop,))
+            self.t.start()
         except StreamClosedError as e:
             self.protocol.on_disconnected()
 
     def disconnect(self):
-        self.stream.close()
-        self.protocol.on_disconnected()
+        self.loop.stop()
+        while self.loop.is_running():
+            time.sleep(0.2)
+        self.loop.close()
+        try:
+            self.stream.close()
+        except RuntimeError as e:
+            logger.info('Runtime error: {}'.format(str(e)))
+        logger.info('Disconnect end')
+
 
     def start(self, loop):
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.read())
+        try:
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.read())
+        except RuntimeError as e:
+            logger.info('Runtime error: {}'.format(str(e)))
 
     def connected(self):
         return not self.stream.closed()
@@ -72,8 +83,4 @@ if __name__=="__main__":
     client = TCPClient('127.0.0.1', 8080, protocol)
     client.connect()
 
-    #import time
-    #time.sleep(1)
-    #client.disconnect()
-    #time.sleep(1)
-    #client.connect()
+

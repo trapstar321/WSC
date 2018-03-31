@@ -1,19 +1,15 @@
 from protocols.client.tcp.ack_protocol import AckProtocol
 from utils.logging import ConsoleLogger
 import json
+import time
 
 logger = ConsoleLogger('protocols/client/tcp/echo_protocol.py')
 
 
 class EchoProtocol(AckProtocol):
     def on_connected(self):
-        message = super(EchoProtocol, self).on_connected()
+        super(EchoProtocol, self).on_connected()
         logger.info('Connected')
-        self.send(message)
-
-        #message = 'Hi\n'.encode('utf-8')
-        #message = super(EchoProtocol, self).send(message)
-        #self.client.send(message)
 
     def on_disconnected(self):
         super(EchoProtocol, self).on_disconnected()
@@ -28,7 +24,7 @@ class EchoProtocol(AckProtocol):
             message['msg'] = 'Hi'
             logger.info('Received => {}'.format(message))
 
-            #time.sleep(2)
+            #time.sleep(0.3)
             self.send(message)
 
     def send(self, message):

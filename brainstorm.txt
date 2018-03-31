@@ -135,9 +135,27 @@ client always send his id on connect, so if he reconnects address can be remaped
 exception raised in send call makes TCP server not run anymore
 
 after client reconnect, all messages left in queue must be sent
-send method should not raise exception, maybe just return flag False, and do not add to queue
+send method should not raise exception, maybe just return flag False
+protocol adds message to queue on send
 
 add queue for websocket client on tcp server, this can also reconnect
 
 
+on server, if message contains dev_id
+ - queue has messages -> resend all
+ - no messages        -> send some response to client
 
+server.AckProtocol
+    on_message
+        acks are cleared when remap finishes
+        messages are resent on remap
+
+client.AckProtocol
+    on_message
+        acks and message resent on first message from server
+        acks cleared after message resend
+
+must see what to do with messages from browser
+must notify browser when client disconnects
+
+keep ack on client and server, remove all when next message comes
