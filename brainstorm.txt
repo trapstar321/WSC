@@ -146,16 +146,19 @@ on server, if message contains dev_id
  - no messages        -> send some response to client
 
 server.AckProtocol
-    on_message
-        acks are cleared when remap finishes
-        messages are resent on remap
+	messages and acks are resent when message contains dev_id key
 
 client.AckProtocol
-    on_message
-        acks and message resent on first message from server
-        acks cleared after message resend
+	messages and acks resent on reconnect after message with dev_id key is sent
 
-must see what to do with messages from browser
-must notify browser when client disconnects
 
-keep ack on client and server, remove all when next message comes
+add queue for websocket client on tcp server, this can also reconnect
+
+connected and disconnected messages from websocket client to websocket server
+websocket does not return message for these 2
+websocket server to browser
+
+on webserversocket protocol, differentiate between browser and tcpserver, maybe check headers see if its a browser
+browser must tell server which device its viewing
+when device message is received then dispatch message to all browsers
+when browser message is received dispatch it to device browser is currently viewing

@@ -37,8 +37,11 @@ class AckProtocol(Protocol):
         return self.address_id_map[address]
 
     def on_connected(self, address):
-        #identity protocol returns message with dev_id
-        message = super(AckProtocol,self).on_connected(address)
+        super(AckProtocol,self).on_connected(address)
+
+    def on_disconnected(self, address):
+        super(AckProtocol, self).on_connected(address)
+        return self.address_id_map[address]
 
     def on_message(self, address, message):
         super(AckProtocol, self).on_message(address, message)
@@ -74,10 +77,8 @@ class AckProtocol(Protocol):
                 message['add_device']=id_
                 message['forward'] = 0
 
-            if 'dev_id' in message:
-                logger.info('Process queue for device={}, address={}'.format(id_, address))
-                self.reconnected(id_, address)
-
+            logger.info('Process queue for device={}, address={}'.format(id_, address))
+            self.reconnected(id_, address)
             del message['dev_id']
 
         id_ = self.address_id_map[address]

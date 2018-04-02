@@ -42,7 +42,8 @@ class AckProtocol(IdentityProtocol):
                 if key in msg_keys:
                     return id_
 
-        msg_ids.remove(message_to_remove(msg_ids, 'dev_id'))
+        if len(msg_ids)>0:
+            msg_ids.remove(message_to_remove(msg_ids, 'dev_id'))
 
         for id_ in msg_ids:
             message = self.queue[id_]

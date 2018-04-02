@@ -11,8 +11,9 @@ class EchoProtocol(AckProtocol):
         logger.info('Client {} connected'.format(address))
 
     def on_disconnected(self, address):
-        super(EchoProtocol, self).on_disconnected(address)
+        dev_id = super(EchoProtocol, self).on_disconnected(address)
         logger.info('Client {} disconnected'.format(address))
+        self.server.d_b_connector.on_device_message(dev_id, {'dev_id': dev_id, 'disconnected': 1})
 
     def on_message(self, address, message):
         message = message.decode('utf-8')
@@ -25,11 +26,13 @@ class EchoProtocol(AckProtocol):
             if 'add_device' in message:
                 server = self.server
                 server.d_b_connector.add_device(server.websocketserver_id, dev_id, address)
+                self.server.d_b_connector.on_device_message(dev_id, {'dev_id': dev_id, 'connected':1})
                 self.send(address, message)
             elif message['forward']==1:
                 self.server.d_b_connector.on_device_message(dev_id, message)
             elif 'remap' in message:
                 self.server.d_b_connector.address_changed(dev_id, message['new_address'])
+                self.server.d_b_connector.on_device_message(dev_id, {'dev_id': dev_id, 'connected': 1})
                 self.send(address, message)
             else:
                 self.send(address, message)

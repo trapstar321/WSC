@@ -1,9 +1,8 @@
 from tornado.websocket import websocket_connect, WebSocketClosedError
 from tornado.iostream import StreamClosedError
 from utils.logging import ConsoleLogger
-import logging, time
+import time
 import asyncio, threading
-from protocols.client.websocket.echo_protocol import EchoProtocol
 
 logger = ConsoleLogger('wsock_client.py')
 
@@ -13,43 +12,62 @@ class WebSocketClient(object):
         self.protocol = protocol;
         self.protocol.client=self
         self.timeout = timeout
+        self.loop = None
+        self.client = None
 
+    def connect(self):
         try:
             logger.info('Connecting...')
             self.loop = asyncio.new_event_loop()
-            self.loop.run_until_complete(self.connect())
+            self.loop.run_until_complete(self.connect_())
 
-            t = threading.Thread(target=self.start, args=(self.loop,))
-            t.start()
+            self.t = threading.Thread(target=self.start, args=(self.loop,))
+            self.t.start()
         except StreamClosedError as e:
             self.protocol.on_disconnected()
 
+    def disconnect(self):
+        try:
+            self.client.stream.close()
+        except RuntimeError as e:
+            logger.info('Runtime error: {}'.format(str(e)))
+
+        self.loop.stop()
+        while self.loop.is_running():
+            time.sleep(0.2)
+        self.loop.close()
+
+        logger.info('Disconnect end')
+
     def start(self, loop):
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.read())
+        try:
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.read())
+        except RuntimeError as e:
+            logger.info('Runtime error: {}'.format(str(e)))
 
     def connected(self):
-        return not self.stream.stream.closed()
+        return not self.client.stream.closed()
 
-    async def connect(self):
-        self.stream = await websocket_connect(self.url)
+    async def connect_(self):
+        self.client = await websocket_connect(self.url)
         self.protocol.on_connected()
 
     def send(self, message):
-        if self.stream.stream.closed():
-            raise Exception('Client not connected')
+        if self.client.stream.closed():
+            return False
         self.loop.call_soon_threadsafe(asyncio.async, self.write(message))
 
     async def write(self, message):
         try:
-            await self.stream.write_message(message)
+            await self.client.write_message(message)
         except WebSocketClosedError as e:
-            self.protocol.on_disconnected
+            self.protocol.on_disconnected()
 
     async def read(self):
         try:
             while True:
-                reply = await self.stream.read_message()
+                reply = await self.client.read_message()
                 if reply is None:
                     self.protocol.on_disconnected()
                     break
@@ -58,15 +76,15 @@ class WebSocketClient(object):
             self.protocol.on_disconnected()
 
     def keep_alive(self):
-        if self.stream is None:
+        if self.client.stream is None:
             self.connect()
         else:
-            self.stream.write_message("keep alive")
+            self.client.write_message("keep alive")
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     # had some problems with double logging, here they are all disabled
-    for key in logging.Logger.manager.loggerDict.keys():
-        lg = logging.getLogger(key)
-        lg.propagate=False
+    #for key in logging.Logger.manager.loggerDict.keys():
+    #    lg = logging.getLogger(key)
+    #    lg.propagate=False
 
-    client = WebSocketClient("ws://localhost:8888", EchoProtocol(), 5)
+    #client = WebSocketClient("ws://localhost:8888", EchoProtocol(), 5)

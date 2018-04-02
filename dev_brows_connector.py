@@ -1,7 +1,8 @@
-from protocols.client.websocket.message_labeling_protocol import MessageLabelingProtocol
+from protocols.client.websocket.ack_protocol import AckProtocol
 from wsock_client import WebSocketClient
-import json
+import threading
 from utils.logging import ConsoleLogger
+import time
 
 logger = ConsoleLogger('dev_browser_connector.py')
 
@@ -15,7 +16,7 @@ class Connection(object):
 
     def connect(self):
         self.client = WebSocketClient("ws://{}:{}".format(self.ip, self.address), self.protocol, 5)
-
+        self.client.connect()
 
 class DeviceBrowserConnector(object):
     def __init__(self, tcp_server_protocol):
@@ -24,12 +25,11 @@ class DeviceBrowserConnector(object):
         #device are clients
         self.devices={}
         self.tcp_server_protocol = tcp_server_protocol
-        self.protocol = MessageLabelingProtocol()
 
     #add new websocket server and connect
     def add_server(self, ip, port):
         logger.info('Add server ({},{})'.format(ip, port))
-        protocol = MessageLabelingProtocol()
+        protocol = AckProtocol()
         # add connector to protocol so we can receive message in on_browser_message
         protocol.connector = self
 
@@ -70,14 +70,13 @@ class DeviceBrowserConnector(object):
     def on_device_message(self, device, message):
         logger.info('Received message {} from device {}'.format(message, device))
         connection = self.connections[self.devices[device]['server']]
-        message = json.dumps(self.protocol.label_message(device, message)).encode('utf-8')+'\n'.encode('utf-8')
+        message['dev_id']=device
         connection.protocol.send(message)
 
     #message from browser, called from protocol of connection
     def on_browser_message(self, message):
         logger.info('Received message {} from browser'.format(message))
-        message = json.loads(message)
-        device_id = self.protocol.extract_label(message)
+        device_id = message['dev_id']
         address = self.devices[device_id]['address']
         del message['dev_id']
         self.tcp_server_protocol.send(address, message)
