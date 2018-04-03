@@ -42,6 +42,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         self.address = self.stream.socket.getpeername()
         WebSocketServer.clients[self.address]=self
         WebSocketServer.protocol.on_connected(self.address)
+        #if 'User-Agent' in self.request.headers:
+        #logger.info('Add browser. Address={}'.format(str(address)))
 
     def on_close(self):
         del WebSocketServer.clients[self.address]

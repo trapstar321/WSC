@@ -28,7 +28,6 @@ class EchoProtocol(AckProtocol):
                 else:
                     self.send(address, message)
 
-
     def send(self, address, message):
         message = super(EchoProtocol, self).send(address, message)
 

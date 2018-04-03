@@ -158,7 +158,43 @@ connected and disconnected messages from websocket client to websocket server
 websocket does not return message for these 2
 websocket server to browser
 
-on webserversocket protocol, differentiate between browser and tcpserver, maybe check headers see if its a browser
-browser must tell server which device its viewing
+device and browser dictionary on echo protocol
+-----------------------------------------------
+on webserversocket protocol, differentiate between browser and tcpserver, check headers to see if its a browser
+browser must tell server which device its viewing -> add dev_id in first message to server
 when device message is received then dispatch message to all browsers
-when browser message is received dispatch it to device browser is currently viewing
+when browser message is received dispatch it to device the browser is currently viewing
+
+websocket client sends connected and disconnected messages
+ - on connected add device to device list, keep address of websocket client to reply with browser messages
+
+websocket server calls on_message when browsers send client_id for first time
+ - add flag is_browser in on_message method of protocol class
+ - if browser connected add to browser list in echo protocol
+
+browser and device data is a dictionary
+for browser keep reference to currently viewed device
+
+when message from browser is received, forward to device. Get device address from device dictionary
+
+maybe like so:
+devices={}
+devices[dev_id]=address
+
+browser={}
+browser[address]={'dev_id':1}
+
+to make it simpler, keep a dictionary with dev_id key to hold list of all browsers viewing particular device
+browser_device_map = {}
+browser_device_map[dev_id]=[address1, address2, address3]
+
+when message from device is received, then look in browser_device_map for browsers that we must forward the message from device
+
+on client reconnect
+    - ack protocol notifies echoprotocol that client reconnected
+      - when client reconnects ackprotocol checks if address was changed
+
+    - pass dev_id, new and old address to echo protocol in on_message
+    - pass browser flag, new and old address to echo protocol in on_message
+
+    - echo protocol remap device and browser in dictionary
