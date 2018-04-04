@@ -8,7 +8,7 @@ class Protocol(object):
     def on_disconnected(self, address):
         self.clients.remove(address)
 
-    def on_message(self, address, message):
+    def on_message(self, address, message, headers):
         pass
 
     def send(self, address, message):

@@ -191,10 +191,11 @@ browser_device_map[dev_id]=[address1, address2, address3]
 when message from device is received, then look in browser_device_map for browsers that we must forward the message from device
 
 on client reconnect
-    - ack protocol notifies echoprotocol that client reconnected
-      - when client reconnects ackprotocol checks if address was changed
-
-    - pass dev_id, new and old address to echo protocol in on_message
+    - pass dev_id, new and old address to echo protocol in on_message (this is address of websocket client on tcpserver)
     - pass browser flag, new and old address to echo protocol in on_message
 
     - echo protocol remap device and browser in dictionary
+	
+when browser send message to client, if its not connected reply to browser and ignore send
+
+check send functionality, how to check if send fails because writing to OS buffer failed	

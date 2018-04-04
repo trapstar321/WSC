@@ -39,8 +39,8 @@ class AckProtocol(Protocol):
     def on_connected(self, address):
         super(AckProtocol,self).on_connected(address)
 
-    def on_message(self, address, message):
-        super(AckProtocol, self).on_message(address, message)
+    def on_message(self, address, message, headers):
+        super(AckProtocol, self).on_message(address, message, headers)
 
         message['forward'] = 1
 
@@ -60,7 +60,8 @@ class AckProtocol(Protocol):
                         del self.address_id_map[old_address]
                         self.address_id_map[address]=id_
                         message['remap'] = 1
-                        message['new_address'] = address
+                        message['old_address'] = old_address
+                        message['reconnected']=1
                         break
                 message['forward']=0
             else:
@@ -72,10 +73,11 @@ class AckProtocol(Protocol):
 
                 message['add_client']=id_
                 message['forward'] = 0
+                message['connected'] = 1
 
             logger.info('Process queue for client={}, address={}'.format(id_, address))
             self.reconnected(id_, address)
-            del message['client_id']
+            #del message['client_id']
 
         id_ = self.address_id_map[address]
 
