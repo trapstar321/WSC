@@ -12,6 +12,7 @@ class AckProtocol(Protocol):
         self.queue={}
         self.acks = {}
         self.address_id_map={}
+        self.id_address_map={}
 
     def gen_msg_id(self, client_id):
         lock = self.queue[client_id]['lock']
@@ -33,8 +34,11 @@ class AckProtocol(Protocol):
             message['resend'] = 1
             self.send(address, message)
 
-    def client_id(self, address):
+    def id_from_address(self, address):
         return self.address_id_map[address]
+
+    def address_from_id(self, id_):
+        return self.id_address_map[id_]
 
     def on_connected(self, address):
         super(AckProtocol,self).on_connected(address)
@@ -59,6 +63,7 @@ class AckProtocol(Protocol):
                         logger.info('Remap client {} address old={}, new={}'.format(id_, old_address, address))
                         del self.address_id_map[old_address]
                         self.address_id_map[address]=id_
+                        self.id_address_map[id_]=address
                         message['remap'] = 1
                         message['old_address'] = old_address
                         message['reconnected']=1
@@ -70,6 +75,7 @@ class AckProtocol(Protocol):
                 self.queue[id_] = {'lock': threading.Lock(), 'queue': {}, 'msg_counter': 0}
                 self.acks[id_]=[]
                 self.address_id_map[address] = id_
+                self.id_address_map[id_]=address
 
                 message['add_client']=id_
                 message['forward'] = 0

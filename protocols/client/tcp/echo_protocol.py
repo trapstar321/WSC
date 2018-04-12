@@ -21,8 +21,8 @@ class EchoProtocol(AckProtocol):
         message = super(EchoProtocol, self).on_message(message)
 
         if message:
-            message['msg'] = 'Hi'
             logger.info('Received => {}'.format(message))
+            message['msg'] = 'Hi'
 
             #time.sleep(0.3)
             self.send(message)
