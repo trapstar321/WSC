@@ -68,7 +68,7 @@ class AckProtocol(IdentityProtocol):
             except KeyError as e:
                 logger.info('KeyError self.queue: {}'.format(str(e)))
 
-            logger.info('Got ack for message {}'.format(message))
+            logger.info('Got ack for message {}'.format(msg_id))
             return None
         else:
             # return ack and extract message
@@ -76,7 +76,7 @@ class AckProtocol(IdentityProtocol):
             ack = {'ack': msg_id}
             self.acks.append(ack)
 
-            logger.info('Return ack {} for message'.format(message))
+            logger.info('Return ack {} for message {}'.format(ack, message))
             self.send(ack)
 
         return message

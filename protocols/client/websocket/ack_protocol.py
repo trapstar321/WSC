@@ -69,7 +69,7 @@ class AckProtocol(IdentityProtocol):
             except KeyError as e:
                 logger.info('KeyError self.queue: {}'.format(str(e)))
 
-            logger.info('Got ack for message {}'.format(message))
+            logger.info('Got ack for message {}'.format(msg_id))
             return None
         else:
             # return ack and extract message
@@ -79,7 +79,7 @@ class AckProtocol(IdentityProtocol):
                 ack = {'ack': msg_id}
                 self.acks.append(ack)
 
-                logger.info('Return ack {} for message'.format(message))
+                logger.info('Return ack {} for message {}'.format(ack, message))
                 self.send(ack)
 
                 self.connector.on_browser_message(message)
@@ -88,7 +88,6 @@ class AckProtocol(IdentityProtocol):
 
     def send(self, message):
         super(AckProtocol, self).send(message)
-        # add message_id to message so it can be acknowledged, only if not ack message
 
         # add message_id to message so it can be acknowledged, only if not ack message
         if 'ack' not in message and 'resend' not in message:

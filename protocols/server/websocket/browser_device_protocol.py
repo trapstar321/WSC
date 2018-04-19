@@ -21,7 +21,7 @@ class BrowserDeviceProtocol(AckProtocol):
         #key is dev_id, value is device forwarders client_id
         self.dev_forwarder_link={}
 
-        #key is dev_id, value is if its connected or disconnected
+        #key is dev_id, value is dictionary with connected flag and address
         self.dev_status={}
 
     def on_connected(self, address):
@@ -33,7 +33,6 @@ class BrowserDeviceProtocol(AckProtocol):
         logger.info('Client {} disconnected'.format(address))
 
     def on_message(self, address, message, headers):
-        message = json.loads(message)
         message = super(BrowserDeviceProtocol, self).on_message(address, message, headers)
 
         if message:
@@ -42,13 +41,13 @@ class BrowserDeviceProtocol(AckProtocol):
                 if 'connected' in message:
                     dev = message['dev_id']
                     logger.info('Notification: device {} connected'.format(dev))
-                    self.dev_status[dev]=True
+                    self.dev_status[dev]={'connected': True, 'address': message['address']}
                     self.add_device(address, dev)
                     self.broadcast_device_message(dev, message)
                 elif 'disconnected' in message:
                     dev = message['dev_id']
                     logger.info('Notification: device {} disconnected'.format(dev))
-                    self.dev_status[dev] = False
+                    self.dev_status[dev]['connected']=False
                     self.broadcast_device_message(dev, message)
                 elif 'choose' in message:
                     dev = message['dev_id']
@@ -58,11 +57,11 @@ class BrowserDeviceProtocol(AckProtocol):
                     client_id = self.id_from_address(address)
                     #message is from browser, forward to device
                     if client_id in self.browsers:
-                        dev = message['dev_id']
-                        self.forward_to_device(client_id, dev, message)
-                    #message is from device, broadcast to browsers viewing the device
-                    elif client_id not in self.browsers and 'query' in message:
-                        pass
+                        if 'dev_id' in message:
+                            dev = message['dev_id']
+                            self.forward_to_device(client_id, dev, message)
+                        elif 'query' in message:
+                            pass
                     else:
                         dev = message['dev_id']
                         self.broadcast_device_message(dev, message)
@@ -95,8 +94,6 @@ class BrowserDeviceProtocol(AckProtocol):
                 self.browsers[message['client_id']]=None
             elif 'reconnected' in message:
                 logger.info('Browser client_id={}, old_address={}, new_address={} reconnected.'.format(message['client_id'],message['old_address'], address))
-        elif 'Query' in headers:
-            pass
         else:
             if 'connected' in message:
                 logger.info('Device message forwarder client_id={}, address={} connected.'.format(message['client_id'], address))
@@ -159,7 +156,7 @@ class BrowserDeviceProtocol(AckProtocol):
     def forward_to_device(self, client_id, dev, message):
         logger.info('Forward message {} to device {}'.format(message, dev))
         if dev in self.dev_forwarder_link:
-            if self.dev_status:
+            if self.dev_status[dev]['connected']:
                 forwarder_id = self.dev_forwarder_link[dev]
                 self.send(self.address_from_id(forwarder_id), message)
             else:

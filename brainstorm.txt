@@ -206,6 +206,29 @@ websocketclient - store client_id in first message from server
 
 query functionality on websocket server
 
-- query header when connecting to websockserver to distinguish client from device and browser
-- query parameters
+- browser will send message with query flag and no dev_id so message will not go to device
+- query parameters as param property in request
 - query protocol to fill response message with data
+
+
+components
+
+first create protocol in js with ack and reconnect capability
+
+js
+
+	input and output components
+
+	input has method for update when message arrives
+
+	output prepares message and tells protocol to send it
+
+	protocol is just ack protocol
+
+	attach handler object to protocol and call on_message when message arrives
+
+	device message -> websocket protocol on message -> parse message -> forward to component
+
+
+
+	component onload function -> example device list to fetch list of devices on websocket server

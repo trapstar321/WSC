@@ -40,7 +40,7 @@ class AckProtocol(Protocol):
         super(AckProtocol,self).on_connected(address)
 
     def on_disconnected(self, address):
-        super(AckProtocol, self).on_connected(address)
+        super(AckProtocol, self).on_disconnected(address)
         return self.address_id_map[address]
 
     def on_message(self, address, message):
@@ -94,7 +94,7 @@ class AckProtocol(Protocol):
             except KeyError as e:
                 logger.info('KeyError self.queue[{}]: {}'.format(id_, str(e)))
 
-            logger.info('Got ack for message {} from client {}'.format(message, address))
+            logger.info('Got ack for message {} from client {}'.format(msg_id, address))
             return None
         else:
             # return ack and extract message
@@ -102,7 +102,7 @@ class AckProtocol(Protocol):
             ack = {'ack': msg_id}
             self.acks[id_].append(ack)
 
-            logger.info('Return ack {} for message'.format(message))
+            logger.info('Return ack {} for message {}'.format(ack, message))
             self.send(address, ack)
 
         return message
