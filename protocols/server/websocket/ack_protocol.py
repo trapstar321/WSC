@@ -1,4 +1,4 @@
-from protocols.server.websocket.protocol import Protocol
+from protocols.server.websocket.identity_protocol import IdentityProtocol
 from utils.logging import ConsoleLogger
 import threading, sys
 import json
@@ -6,7 +6,7 @@ import json
 logger = ConsoleLogger('protocols/server/websocket/ack_protocol.py')
 
 
-class AckProtocol(Protocol):
+class AckProtocol(IdentityProtocol):
     def __init__(self):
         super(AckProtocol, self).__init__()
         self.queue={}
@@ -41,7 +41,8 @@ class AckProtocol(Protocol):
         return self.id_address_map[id_]
 
     def on_connected(self, address):
-        super(AckProtocol,self).on_connected(address)
+        message = super(AckProtocol,self).on_connected(address)
+        self.send(address, message)
 
     def on_message(self, address, message, headers):
         super(AckProtocol, self).on_message(address, message, headers)
@@ -113,18 +114,19 @@ class AckProtocol(Protocol):
 
     def send(self, address, message):
         super(AckProtocol, self).send(address, message)
-        client_id = self.address_id_map[address]
+        if address in self.address_id_map:
+            client_id = self.address_id_map[address]
 
-        # add message_id to message so it can be acknowledged, only if not ack message
-        if 'ack' not in message and 'resend' not in message:
-            id_ = self.gen_msg_id(client_id)
-            self.queue[client_id]['queue'][id_] = message
+            # add message_id to message so it can be acknowledged, only if not ack message
+            if 'ack' not in message and 'resend' not in message:
+                id_ = self.gen_msg_id(client_id)
+                self.queue[client_id]['queue'][id_] = message
 
-            message['id'] = id_
-            logger.info('Signed message {} for client {}'.format(message, address))
+                message['id'] = id_
+                logger.info('Signed message {} for client {}'.format(message, address))
 
-        if 'resend' in message:
-            logger.info('Resend message {} to client {}'.format(message, address))
-            del message['resend']
+            if 'resend' in message:
+                logger.info('Resend message {} to client {}'.format(message, address))
+                del message['resend']
 
         return message

@@ -26,8 +26,7 @@ class AckProtocol(IdentityProtocol):
         #check if something on queue and return all messages ordered by id
         #if next server message is ack, doesn't matter will be sent twice
 
-        message = super(AckProtocol, self).on_connected()
-        self.send(message)
+        super(AckProtocol, self).on_connected()
 
         for ack in self.acks:
             self.send(ack)
@@ -54,9 +53,12 @@ class AckProtocol(IdentityProtocol):
         pass
 
     def on_message(self, message):
-        super(AckProtocol, self).on_message(message)
-
         message = json.loads(message)
+        on_connect_msg = super(AckProtocol, self).on_message(message)
+
+        if on_connect_msg:
+            self.send(on_connect_msg)
+
         self.acks.clear()
 
         # acknowledge message
@@ -71,14 +73,16 @@ class AckProtocol(IdentityProtocol):
             return None
         else:
             # return ack and extract message
-            msg_id = message['id']
-            ack = {'ack': msg_id}
-            self.acks.append(ack)
+            # onyl if server signed the message
+            if 'id' in message:
+                msg_id = message['id']
+                ack = {'ack': msg_id}
+                self.acks.append(ack)
 
-            logger.info('Return ack {} for message'.format(message))
-            self.send(ack)
+                logger.info('Return ack {} for message'.format(message))
+                self.send(ack)
 
-            self.connector.on_browser_message(message)
+                self.connector.on_browser_message(message)
 
         return message
 

@@ -2,12 +2,11 @@ from protocols.server.websocket.ack_protocol import AckProtocol
 from utils.logging import ConsoleLogger
 import json
 
-logger = ConsoleLogger('protocols/server/websocket/echo_protocol.py')
+logger = ConsoleLogger('protocols/server/websocket/browser_device_protocol.py')
 
-
-class EchoProtocol(AckProtocol):
+class BrowserDeviceProtocol(AckProtocol):
     def __init__(self):
-        super(EchoProtocol, self).__init__()
+        super(BrowserDeviceProtocol, self).__init__()
         # key is client_id, value is list of all device from that client
         # address can be obtained from address_id_map on AckProtocol
         self.dev_forwarder={}
@@ -26,16 +25,16 @@ class EchoProtocol(AckProtocol):
         self.dev_status={}
 
     def on_connected(self, address):
-        super(EchoProtocol,self).on_connected(address)
+        super(BrowserDeviceProtocol,self).on_connected(address)
         logger.info('Client {} connected'.format(address))
 
     def on_disconnected(self, address):
-        super(EchoProtocol, self).on_disconnected(address)
+        super(BrowserDeviceProtocol, self).on_disconnected(address)
         logger.info('Client {} disconnected'.format(address))
 
     def on_message(self, address, message, headers):
         message = json.loads(message)
-        message = super(EchoProtocol, self).on_message(address, message, headers)
+        message = super(BrowserDeviceProtocol, self).on_message(address, message, headers)
 
         if message:
             logger.info('Received message {} from client {}'.format(message, address))
@@ -56,20 +55,23 @@ class EchoProtocol(AckProtocol):
                     message = self.choose_device(address, dev)
                     self.send(address, message)
                 else:
-                    dev = message['dev_id']
                     client_id = self.id_from_address(address)
                     #message is from browser, forward to device
                     if client_id in self.browsers:
+                        dev = message['dev_id']
                         self.forward_to_device(client_id, dev, message)
                     #message is from device, broadcast to browsers viewing the device
+                    elif client_id not in self.browsers and 'query' in message:
+                        pass
                     else:
+                        dev = message['dev_id']
                         self.broadcast_device_message(dev, message)
 
             else:
                 self.handle_connection(address, message, headers)
 
     def send(self, address, message):
-        message = super(EchoProtocol, self).send(address, message)
+        message = super(BrowserDeviceProtocol, self).send(address, message)
 
         if 'client_id' in message:
             del message['client_id']
@@ -93,6 +95,8 @@ class EchoProtocol(AckProtocol):
                 self.browsers[message['client_id']]=None
             elif 'reconnected' in message:
                 logger.info('Browser client_id={}, old_address={}, new_address={} reconnected.'.format(message['client_id'],message['old_address'], address))
+        elif 'Query' in headers:
+            pass
         else:
             if 'connected' in message:
                 logger.info('Device message forwarder client_id={}, address={} connected.'.format(message['client_id'], address))

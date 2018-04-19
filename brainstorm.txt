@@ -198,4 +198,14 @@ on client reconnect
 	
 when browser send message to client, if its not connected reply to browser and ignore send
 
-check send functionality, how to check if send fails because writing to OS buffer failed	
+check send functionality, how to check if send fails because writing to OS buffer failed
+
+websocketserver - generate unique id on connect if not reconnecting
+websocketclient - store client_id in first message from server
+                  when reconnecting ignore client_id, and send stored one
+
+query functionality on websocket server
+
+- query header when connecting to websockserver to distinguish client from device and browser
+- query parameters
+- query protocol to fill response message with data

@@ -6,7 +6,7 @@ import tornado.websocket
 import os.path
 
 from tornado.options import define, options
-from protocols.server.websocket.echo_protocol import EchoProtocol
+from protocols.server.websocket.query_protocol import QueryProtocol
 from utils.logging import ConsoleLogger
 logger = ConsoleLogger('wsock_server.py')
 
@@ -56,7 +56,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
 def main():
     tornado.options.parse_command_line()
-    WebSocketServer.protocol = EchoProtocol()
+    WebSocketServer.protocol = QueryProtocol()
     WebSocketServer.protocol.server = WebSocketServer
     app = Application()
     app.listen(options.port)

@@ -3,17 +3,19 @@ from tornado.iostream import StreamClosedError
 from utils.logging import ConsoleLogger
 import time
 import asyncio, threading
+from tornado.httpclient import HTTPRequest
 
 logger = ConsoleLogger('wsock_client.py')
 
 class WebSocketClient(object):
-    def __init__(self, url, protocol, timeout):
+    def __init__(self, url, protocol, timeout, headers=None):
         self.url = url
         self.protocol = protocol;
         self.protocol.client=self
         self.timeout = timeout
         self.loop = None
         self.client = None
+        self.headers = headers
 
     def connect(self):
         try:
@@ -50,7 +52,11 @@ class WebSocketClient(object):
         return not self.client.stream.closed()
 
     async def connect_(self):
-        self.client = await websocket_connect(self.url)
+        request = HTTPRequest(self.url)
+        if self.headers:
+            request = HTTPRequest(self.url, headers=self.headers)
+
+        self.client = await websocket_connect(request)
         self.protocol.on_connected()
 
     def send(self, message):
