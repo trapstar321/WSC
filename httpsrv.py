@@ -4,6 +4,9 @@ import tornado.web
 from tornado.ioloop import IOLoop
 from tornado.options import define, options
 from tornado.escape import xhtml_escape
+from pages.device_list_page import DeviceListPage
+from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import ChoiceLoader, FileSystemLoader
 
 # config options
 define('port', default=8080, type=int, help='port to run web server on')
@@ -15,9 +18,24 @@ PORT = options.port
 DEBUG = options.debug
 ROUTE_TO_INDEX = options.route_to_index
 
+loader_pages = FileSystemLoader("pages/templates")
+loader_components = FileSystemLoader("components/templates")
+loader = ChoiceLoader([loader_pages, loader_components])
+
+loader_ = Environment(
+    loader=loader,
+    autoescape=select_autoescape(['html', 'xml'])
+)
+
+pages = [DeviceListPage(loader_)]
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self, path):
-        self.write("Hello, world")
+        for page in pages:
+            if(page.get_url_segment()==path):
+                self.write(page.render())
+                return
+        self.write("Page not found")
 
 class DirectoryHandler(tornado.web.StaticFileHandler):
     def validate_absolute_path(self, root, absolute_path):

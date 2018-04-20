@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    {% for script in scripts %}
+    <script src="static/{{script}}"></script>
+    {% endfor %}
+</head>
+<body>
+    <div>
+        {{DevListComponent_1 | safe}}
+    </div>
+</body>
+</html>
