@@ -1,0 +1,3 @@
+class DeviceListComponent extends Component{
+    
+}

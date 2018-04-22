@@ -10,3 +10,6 @@ class Component:
 
     def get_template_data(self):
         pass
+
+    def get_scripts(self):
+        pass

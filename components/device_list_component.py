@@ -15,3 +15,6 @@ class DevListComponent(Component):
 
     def get_template_data(self):
         return {}
+
+    def get_scripts(self):
+        return ['js/components/device_list_component.js']

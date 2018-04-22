@@ -2,7 +2,7 @@ class Protocol{
 	on_connected(){}
 	on_disconnected(){}
 	on_message(message){}
-	send(message){}
+	send(message){}	
 }
 
 class IdentityProtocol extends Protocol
@@ -24,13 +24,19 @@ class IdentityProtocol extends Protocol
 }
 
 class AckProtocol extends IdentityProtocol{
-	constructor(client){
+	constructor(){
 		super();
 		this.queue={};
 		this.acks=[];
 		this.msg_id_counter=0;
-		this.client=client;
+		this.client=null;
+		this.components=[]
 	}	
+
+	add_component(component){
+		component.setProtocol(this);
+		this.components.push(component);
+	}
 
 	gen_msg_id(){
 		if(this.msg_id_counter==Number.MAX_SAFE_INTEGER){
@@ -47,6 +53,10 @@ class AckProtocol extends IdentityProtocol{
 			if(msg_keys.includes(key))
 				return id_
 		});
+	}
+
+	on_disconnected(){
+		console.log('protocol.js AckProtocol on_disconnected()');
 	}
 
 	on_connected(){
@@ -74,7 +84,7 @@ class AckProtocol extends IdentityProtocol{
 	}
 
 	on_message(message){
-		console.log('Received message '+message);
+		console.log('protocol.js AckProtocol on_message(): message='+message);
 		message = JSON.parse(message);		
 		var on_connect_msg = super.on_message(message);
 
@@ -88,7 +98,7 @@ class AckProtocol extends IdentityProtocol{
 		if(message.hasOwnProperty('ack')){
 			var msg_id = message['ack'];
 			delete this.queue[msg_id];
-			console.log("Got ack for message "+msg_id);
+			console.log("protocol.js AckProtocol on_message(): got ack for message "+msg_id);
 			return null;
 		}else{
 			// return ack and extract message
@@ -98,15 +108,21 @@ class AckProtocol extends IdentityProtocol{
 				var ack = {'ack':msg_id};
 				this.acks.push(ack);
 
-				console.log("Return ack for message "+JSON.stringify(message));
+				console.log("protocol.js AckProtocol on_message: return ack for message "+JSON.stringify(message));
 				this.send(ack);
+			}
+			
+			if(on_connect_msg==null){
+				this.components.forEach(function(component){
+					component.on_message(message);
+				})
 			}
 		}
 		return message;
 	}
 
 	send(message){
-		console.log("Send message "+JSON.stringify(message));
+		console.log("protocol.js AckProtocol send(): send message "+JSON.stringify(message));
 		super.send(message);
 
 		//add message_id to message so it can be acknowledged, only if not ack messag
@@ -115,24 +131,18 @@ class AckProtocol extends IdentityProtocol{
 			this.queue[id_]=message;
 
 			message['id']=id_
-			console.log('Signed message '+JSON.stringify(message));
+			console.log('protocol.js AckProtocol send(): signed message '+JSON.stringify(message));
 		}
 
 		if(message.hasOwnProperty('resend')){
-			console.log('Resend message '+JSON.stringify(message));
+			console.log('protocol.js AckProtocol send(): resend message '+JSON.stringify(message));
 			delete message['resend'];
 		}
 
 		this.client.send(JSON.stringify(message));
 	}
-}
 
-
-websocket = new WebSocket('ws://localhost:8888')
-protocol = new AckProtocol(websocket);
-websocket.onopen=function(){
-	protocol.on_connected();
-	websocket.onmessage=function(message){			
-		protocol.on_message(message.data);
+	setClient(client){
+		this.client=client;
 	}
 }

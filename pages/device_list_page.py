@@ -17,5 +17,8 @@ class DeviceListPage(Page):
     def get_template(self):
         return 'device_list.html'
 
-    def get_scripts(self):
-        return ['js/protocol.js']
+    def get_scripts_before(self):
+        return ['js/protocol.js', 'js/client.js', 'js/components/component.js']
+
+    def get_scripts_after(self):
+        return ['js/pages/device_list_page.js']
