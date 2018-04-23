@@ -5,7 +5,8 @@ from tornado.ioloop import IOLoop
 from tornado.options import define, options
 from tornado.escape import xhtml_escape
 from pages.device_list_page import DeviceListPage
-from pages.view_device_page import ViewDevicePage
+from pages.weather_station_page import WeatherStationPage
+from components.weather_station_component import WeatherStationComponent
 from jinja2 import Environment, PackageLoader, select_autoescape
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -28,7 +29,7 @@ loader_ = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-pages = [DeviceListPage(loader_), ViewDevicePage(loader_)]
+pages = [DeviceListPage(loader_), WeatherStationPage(loader_)]
 
 class MainHandler(tornado.web.RequestHandler):
     def get_args(self, path, page):

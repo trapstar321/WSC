@@ -2,6 +2,7 @@ from protocols.client.tcp.ack_protocol import AckProtocol
 from utils.logging import ConsoleLogger
 import json
 import asyncio
+import random
 
 logger = ConsoleLogger('protocols/client/tcp/weather_station_protocol.py')
 
@@ -10,7 +11,7 @@ class WeatherStationProtocol(AckProtocol):
     @asyncio.coroutine
     def send_weather_data(self):
         yield from asyncio.sleep(4)
-        message={'temperature':20, 'humidity':98}
+        message={'temperature':random.randint(0,30), 'humidity':random.randint(0,100)}
         self.send(message)
 
         loop = asyncio.get_event_loop()

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <title>{{title}}</title>
     {% for script in scripts %}
-    <script src="static/{{script}}"></script>
+    <script src="/static/{{script}}"></script>
     {% endfor %}
 
     {% for css_ in css %}
-    <link rel="stylesheet" type="text/css" href="static/{{css_}}"/>
+    <link rel="stylesheet" type="text/css" href="/static/{{css_}}"/>
     {% endfor %}
 </head>
 <body>

@@ -128,8 +128,12 @@ class BrowserDeviceProtocol(AckProtocol):
                     break
 
         if found:
-            logger.info('Browser client_id={}, address={} chose device {}. Device is connected!'.format(client_id, address,dev))
-            return {'dev_id': dev, 'connected': 1}
+            if self.dev_status[dev]['connected']:
+                logger.info('Browser client_id={}, address={} chose device {}. Device is connected!'.format(client_id, address,dev))
+                return {'dev_id': dev, 'connected': 1, 'address': self.dev_status[dev]['address']}
+            else:
+                logger.info('Browser client_id={}, address={} chose device {}. Device is not connected!'.format(client_id,address, dev))
+                return {'dev_id': dev, 'not_connected': 1, 'address': self.dev_status[dev]['address']}
         else:
             logger.info('Browser client_id={}, address={} chose device {}. Device is not connected!'.format(client_id, address,dev))
             return {'dev_id':dev, 'not_connected':1}

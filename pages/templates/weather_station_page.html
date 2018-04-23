@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    {% for script in scripts %}
+    <script src="/static/{{script}}"></script>
+    {% endfor %}
+
+    {% for css_ in css %}
+    <link rel="stylesheet" type="text/css" href="/static/{{css_}}"/>
+    {% endfor %}
+</head>
+<body>
+    <input type="hidden" name="dev_id" value="{{id}}"/>
+
+    {{WeatherStationComponent_1 | safe}}
+</body>
+</html>
