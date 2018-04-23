@@ -52,7 +52,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send(self, address, message):
-        WebSocketServer.clients[address].write_message(message)
+        if address in WebSocketServer.clients:
+            WebSocketServer.clients[address].write_message(message)
 
 def main():
     tornado.options.parse_command_line()

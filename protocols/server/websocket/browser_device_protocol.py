@@ -43,12 +43,12 @@ class BrowserDeviceProtocol(AckProtocol):
                     logger.info('Notification: device {} connected'.format(dev))
                     self.dev_status[dev]={'connected': True, 'address': message['address']}
                     self.add_device(address, dev)
-                    self.broadcast_device_message(dev, message)
+                    self.broadcast_device_status(dev, message)
                 elif 'disconnected' in message:
                     dev = message['dev_id']
                     logger.info('Notification: device {} disconnected'.format(dev))
                     self.dev_status[dev]['connected']=False
-                    self.broadcast_device_message(dev, message)
+                    self.broadcast_device_status(dev, message)
                 elif 'choose' in message:
                     dev = message['dev_id']
                     message = self.choose_device(address, dev)
@@ -142,6 +142,13 @@ class BrowserDeviceProtocol(AckProtocol):
         if client_id not in self.browser_device_map[dev]:
             logger.info('Add client_id={} to browser_device_map for device {}'.format(client_id, dev))
             self.browser_device_map[dev].append(client_id)
+
+    def broadcast_device_status(self, dev, message):
+        logger.info('Broadcast status {}.'.format(message))
+        for client in self.browsers:
+            address = self.address_from_id(client)
+            logger.info('Broadcast status {} for device {} to client_id={}, address={}'.format(message, dev, client, address))
+            self.send(address, message)
 
     def broadcast_device_message(self, dev, message):
         logger.info('Broadcast message {}.'.format(message))

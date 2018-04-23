@@ -232,3 +232,7 @@ js
 
 
 	component onload function -> example device list to fetch list of devices on websocket server
+
+unlink and remove browsers when not reconnected for a while
+
+fix script and css path so its full path

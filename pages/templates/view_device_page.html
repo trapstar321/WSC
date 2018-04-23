@@ -6,10 +6,12 @@
     {% for script in scripts %}
     <script src="static/{{script}}"></script>
     {% endfor %}
+
+    {% for css_ in css %}
+    <link rel="stylesheet" type="text/css" href="static/{{css_}}"/>
+    {% endfor %}
 </head>
 <body>
-    <div>
-        {{DevListComponent_1 | safe}}
-    </div>
+
 </body>
 </html>

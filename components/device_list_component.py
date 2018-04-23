@@ -14,7 +14,10 @@ class DevListComponent(Component):
         return "device_list_component.html"
 
     def get_template_data(self):
-        return {}
+        return {'device_list_component_id':'device_list_component_'+str(self.id)}
 
     def get_scripts(self):
         return ['js/components/device_list_component.js']
+
+    def get_css(self):
+        return {'css/components/device_list_component.css'}

@@ -13,3 +13,6 @@ class Component:
 
     def get_scripts(self):
         pass
+
+    def get_css(self):
+        pass

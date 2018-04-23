@@ -5,6 +5,7 @@ from tornado.ioloop import IOLoop
 from tornado.options import define, options
 from tornado.escape import xhtml_escape
 from pages.device_list_page import DeviceListPage
+from pages.view_device_page import ViewDevicePage
 from jinja2 import Environment, PackageLoader, select_autoescape
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -27,14 +28,44 @@ loader_ = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-pages = [DeviceListPage(loader_)]
+pages = [DeviceListPage(loader_), ViewDevicePage(loader_)]
 
 class MainHandler(tornado.web.RequestHandler):
+    def get_args(self, path, page):
+        url_path_arguments = page.get_url_segment().split('/')
+        arguments = path.split('/')
+
+        arg_list = {}
+        if len(url_path_arguments) > 1:
+            i = 1
+            for arg_name in url_path_arguments[1:]:
+                try:
+                    arg_val = arguments[i]
+                    if len(arg_val)==0:
+                        raise Exception('Missing argument {}. Arguments = {}'.format(arg_name, page.get_url_segment()))
+                    arg_list[arg_name.replace('{', '').replace('}', '')] = arg_val
+                    i += 1
+                except IndexError:
+                    raise Exception('Missing argument {}. Arguments = {}'.format(arg_name, page.get_url_segment()))
+        return arg_list
+
     def get(self, path):
         for page in pages:
-            if(page.get_url_segment()==path):
+            url = page.get_url_segment()
+
+            # url path without arguments
+            if(url==path):
                 self.write(page.render())
                 return
+            #url path with argument
+            elif url.split('/')[0]==path.split('/')[0]:
+                try:
+                    args_list = self.get_args(path, page)
+                    self.write(page.render(args_list))
+                    return
+                except Exception as e:
+                    self.write(str(e))
+                    return
         self.write("Page not found")
 
 class DirectoryHandler(tornado.web.StaticFileHandler):

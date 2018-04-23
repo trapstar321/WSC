@@ -2,7 +2,7 @@ from tornado.iostream import StreamClosedError
 from tornado.tcpclient import TCPClient as TornadoTCPClient
 from utils.logging import ConsoleLogger
 import logging
-from protocols.client.tcp.echo_protocol import  EchoProtocol
+from protocols.client.tcp.weather_station_protocol import  WeatherStationProtocol
 import time
 
 import asyncio, threading
@@ -79,8 +79,8 @@ if __name__=="__main__":
         lg = logging.getLogger(key)
         lg.propagate = False
 
-    protocol = EchoProtocol()
-    client = TCPClient('127.0.0.1', 8080, protocol)
+    protocol = WeatherStationProtocol()
+    client = TCPClient('127.0.0.1', 8081, protocol)
     client.connect()
 
 

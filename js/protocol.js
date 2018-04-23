@@ -89,14 +89,20 @@ class AckProtocol extends IdentityProtocol{
 		var on_connect_msg = super.on_message(message);
 
 		if(on_connect_msg){
-			this.send(on_connect_msg);
+			this.send(on_connect_msg);			
 		}
 
 		this.acks=[];
 
 		//acknowledge message
 		if(message.hasOwnProperty('ack')){
-			var msg_id = message['ack'];
+			var msg_id = message['ack'];			
+			if(this.queue[msg_id].hasOwnProperty('client_id')){
+				console.log('protocol.js AckProtocol on_message(): call onload for each component');
+				this.components.forEach(function(component){
+					component.onload();
+				});
+			}
 			delete this.queue[msg_id];
 			console.log("protocol.js AckProtocol on_message(): got ack for message "+msg_id);
 			return null;
