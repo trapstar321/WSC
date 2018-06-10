@@ -34,6 +34,15 @@ class WeatherStationComponent extends Component{
         }else if(msg_type==MESSAGE_TYPE.MESSAGE){
             $("#temperature").text(message.temperature);
             $("#humidity").text(message.humidity);
+
+            var currentdate = new Date();
+            var datetime = currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/"
+                + currentdate.getFullYear() + " "
+                + currentdate.getHours() + ":"
+                + currentdate.getMinutes() + ":"
+                + currentdate.getSeconds();
+            $("#last_updated").text(datetime);
         }
     }
 

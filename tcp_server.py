@@ -6,7 +6,7 @@ from tornado.tcpserver import TCPServer as TornadoTCPServer
 from protocols.server.tcp.echo_protocol import EchoProtocol
 from dev_brows_connector import DeviceBrowserConnector
 
-import asyncio, logging
+import asyncio, logging, socket
 
 from utils.logging import ConsoleLogger
 logger = ConsoleLogger('tcp_server.py')
@@ -36,6 +36,12 @@ class TCPServer(TornadoTCPServer):
     def handle_stream(self, stream, address):
         ip, fileno = address
         TCPServer.clients[address]=stream
+
+        sock = stream.socket
+
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 10000, 3000))
+
         self.protocol.on_connected(address)
 
         while True:
